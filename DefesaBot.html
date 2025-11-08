@@ -1,0 +1,1547 @@
+<!doctype html>
+<html lang="pt-BR">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DefesaBot - WhatsApp Business</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      height: 100%;
+      overflow: hidden;
+      background: #111b21;
+    }
+    
+    html {
+      height: 100%;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+
+    .whatsapp-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      background: #ffffff;
+      position: relative;
+    }
+
+    /* Header do WhatsApp */
+    .wa-header {
+      background: #202c33;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      position: relative;
+      z-index: 100;
+    }
+
+    .wa-back-btn {
+      color: #aebac1;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+    }
+
+    .wa-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+
+    .wa-header-info {
+      flex: 1;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .wa-header-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: #e9edef;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .wa-verified {
+      color: #25d366;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .wa-header-status {
+      font-size: 13px;
+      color: #8696a0;
+      margin: 2px 0 0 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .wa-header-actions {
+      display: flex;
+      gap: 24px;
+      color: #aebac1;
+      font-size: 20px;
+      align-items: center;
+    }
+
+    .wa-header-actions span {
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .wa-qr-btn {
+      cursor: pointer;
+      padding: 4px;
+      position: relative;
+    }
+
+    .wa-qr-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .wa-qr-modal.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .wa-qr-content {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 16px;
+      text-align: center;
+      max-width: 90%;
+      animation: slideUp 0.3s ease-out;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .wa-qr-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #202c33;
+      margin: 0 0 8px 0;
+    }
+
+    .wa-qr-subtitle {
+      font-size: 14px;
+      color: #667781;
+      margin: 0 0 24px 0;
+    }
+
+    .wa-qr-code {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      display: inline-block;
+      border: 2px solid #e9edef;
+      margin-bottom: 20px;
+    }
+
+    .wa-qr-link {
+      font-size: 13px;
+      color: #00a884;
+      word-break: break-all;
+      margin: 16px 0;
+      font-weight: 500;
+    }
+
+    .wa-qr-close {
+      background: #25d366;
+      color: #ffffff;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 24px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .wa-qr-close:hover {
+      background: #20bd5a;
+      transform: scale(1.05);
+    }
+
+    .wa-qr-close:active {
+      transform: scale(0.95);
+    }
+
+    /* Chat Background */
+    .wa-chat-bg {
+      flex: 1;
+      background: #efeae2;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wa-chat-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0.4;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="260" height="260"><path d="M0 0h260v260H0z" fill="none"/><path d="M30 30l200 200M230 30L30 230" stroke="%23d1d7db" stroke-width="1"/></svg>');
+      background-repeat: repeat;
+      pointer-events: none;
+    }
+
+    .wa-chat-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 12px 8px 12px 8px;
+      scroll-behavior: smooth;
+    }
+
+    .wa-chat-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .wa-chat-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .wa-chat-container::-webkit-scrollbar-thumb {
+      background: #374045;
+      border-radius: 3px;
+    }
+
+    /* Mensagens */
+    .wa-message {
+      display: flex;
+      margin-bottom: 8px;
+      animation: messageSlide 0.3s ease-out;
+    }
+
+    @keyframes messageSlide {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .wa-message.bot {
+      justify-content: flex-start;
+    }
+
+    .wa-message.user {
+      justify-content: flex-end;
+    }
+
+    .wa-bubble {
+      max-width: 75%;
+      padding: 6px 7px 8px 9px;
+      border-radius: 7.5px;
+      position: relative;
+      box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+      word-wrap: break-word;
+    }
+
+    .wa-message.bot .wa-bubble {
+      background: #202c33;
+      color: #e9edef;
+    }
+
+    .wa-message.user .wa-bubble {
+      background: #005c4b;
+      color: #e9edef;
+    }
+
+    .wa-bubble-tail {
+      position: absolute;
+      top: 0;
+      width: 8px;
+      height: 13px;
+    }
+
+    .wa-message.bot .wa-bubble-tail {
+      left: -8px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 13" width="8" height="13"><path opacity=".13" d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z"/><path fill="%23202c33" d="M5.188 0H0v11.193l6.467-8.625C7.526 1.156 6.958 0 5.188 0z"/></svg>') no-repeat;
+    }
+
+    .wa-message.user .wa-bubble-tail {
+      right: -8px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 13" width="8" height="13"><path opacity=".13" fill="%23005c4b" d="M1.533 3.568L8 12.193V1H2.812C1.042 1 .474 2.156 1.533 3.568z"/><path fill="%23005c4b" d="M1.533 2.568L8 11.193V0H2.812C1.042 0 .474 1.156 1.533 2.568z"/></svg>') no-repeat;
+    }
+
+    .wa-business-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(37, 211, 102, 0.15);
+      color: #25d366;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .wa-message-text {
+      font-size: 14.2px;
+      line-height: 19px;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .wa-message-text strong {
+      font-weight: 600;
+    }
+
+    .wa-message-text a {
+      color: #53bdeb;
+      text-decoration: none;
+    }
+
+    .wa-message-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #8696a0;
+    }
+
+    .wa-message.user .wa-message-footer {
+      color: #8696a0;
+    }
+
+    .wa-checkmarks {
+      display: inline-flex;
+      align-items: center;
+      color: #53bdeb;
+      font-size: 16px;
+      margin-left: 2px;
+    }
+
+    /* Botões de Resposta Rápida */
+    .wa-quick-replies {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+      max-width: 75%;
+    }
+
+    .wa-quick-reply-btn {
+      background: #202c33;
+      border: 1px solid #374045;
+      color: #e9edef;
+      padding: 10px 14px;
+      border-radius: 7.5px;
+      font-size: 14px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .wa-quick-reply-btn:hover {
+      background: #2a3942;
+      border-color: #25d366;
+    }
+
+    .wa-quick-reply-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Link Button */
+    .wa-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #005c4b;
+      color: #e9edef;
+      padding: 8px 14px;
+      border-radius: 7.5px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 8px;
+      transition: background 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .wa-link-btn:hover {
+      background: #017561;
+    }
+
+    /* Indicador de Digitação */
+    .wa-typing {
+      display: none;
+      padding: 10px 14px;
+      background: #202c33;
+      border-radius: 7.5px;
+      max-width: 65px;
+      box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+    }
+
+    .wa-typing.active {
+      display: block;
+    }
+
+    .wa-typing-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wa-typing-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #8696a0;
+      animation: typingBounce 1.4s infinite;
+    }
+
+    .wa-typing-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .wa-typing-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% {
+        transform: translateY(0);
+      }
+      30% {
+        transform: translateY(-8px);
+      }
+    }
+
+    /* Input Area */
+    .wa-input-area {
+      background: #202c33;
+      padding: 8px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      box-shadow: 0 -1px 2px rgba(0,0,0,0.3);
+      position: relative;
+      z-index: 100;
+    }
+
+    .wa-input-actions {
+      display: flex;
+      gap: 8px;
+      color: #8696a0;
+      font-size: 24px;
+      padding-bottom: 8px;
+    }
+
+    .wa-input-actions span {
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .wa-input-actions span:hover {
+      color: #aebac1;
+    }
+
+    .wa-input-wrapper {
+      flex: 1;
+      background: #2a3942;
+      border-radius: 21px;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      min-height: 42px;
+    }
+
+    .wa-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #e9edef;
+      font-size: 15px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      outline: none;
+      resize: none;
+      max-height: 100px;
+      line-height: 20px;
+    }
+
+    .wa-input::placeholder {
+      color: #8696a0;
+    }
+
+    .wa-send-btn {
+      background: #25d366;
+      color: #0b141a;
+      border: none;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+
+    .wa-send-btn:hover {
+      background: #20bd5a;
+      transform: scale(1.05);
+    }
+
+    .wa-send-btn:active {
+      transform: scale(0.95);
+    }
+
+    .wa-send-btn:disabled {
+      background: #374045;
+      color: #8696a0;
+      cursor: not-allowed;
+      transform: scale(1);
+    }
+
+    /* Empty State */
+    .wa-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #8696a0;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .wa-empty-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .wa-empty-title {
+      font-size: 20px;
+      font-weight: 400;
+      color: #e9edef;
+      margin: 0 0 8px 0;
+    }
+
+    .wa-empty-subtitle {
+      font-size: 14px;
+      color: #8696a0;
+      margin: 0;
+      max-width: 300px;
+    }
+
+    /* Toast Notification */
+    .wa-toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2a3942;
+      color: #e9edef;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 1000;
+      animation: toastSlide 0.3s ease-out;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      max-width: 90%;
+    }
+
+    @keyframes toastSlide {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    /* Info Card */
+    .wa-info-card {
+      background: rgba(255, 193, 7, 0.1);
+      border-left: 3px solid #ffc107;
+      padding: 10px 12px;
+      margin-top: 8px;
+      border-radius: 5px;
+      font-size: 13px;
+      line-height: 18px;
+      color: #e9edef;
+    }
+
+    /* Date Divider */
+    .wa-date-divider {
+      text-align: center;
+      margin: 16px 0;
+    }
+
+    .wa-date-badge {
+      background: #202c33;
+      color: #8696a0;
+      padding: 5px 12px;
+      border-radius: 7.5px;
+      font-size: 12.5px;
+      display: inline-block;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .wa-bubble {
+        max-width: 85%;
+      }
+      
+      .wa-quick-replies {
+        max-width: 85%;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="whatsapp-container"><!-- Header -->
+   <header class="wa-header"><span class="wa-back-btn">←</span>
+    <div class="wa-avatar">
+     🌾
+    </div>
+    <div class="wa-header-info">
+     <p class="wa-header-name"><span id="bot-name">DefesaBot SEAGRI-DF</span> <span class="wa-verified">✓</span></p>
+     <p class="wa-header-status" id="bot-status">Atendimento 24h • Responde rápido</p>
+    </div>
+    <div class="wa-header-actions"><span>📹</span> <span>📞</span> <span class="wa-qr-btn" onclick="toggleQRModal()">
+      <svg width="24" height="24" viewbox="0 0 24 24" fill="currentColor"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h-2v3h-3v2h3v3h2v-3h3v-2h-3v-3z" />
+      </svg></span> <span>⋮</span>
+    </div>
+   </header><!-- QR Code Modal -->
+   <div class="wa-qr-modal" id="qr-modal" onclick="closeQRModal(event)">
+    <div class="wa-qr-content" onclick="event.stopPropagation()">
+     <h2 class="wa-qr-title">🌾 Acesse pelo QR Code</h2>
+     <p class="wa-qr-subtitle">Escaneie o código para acessar o site da SEAGRI-DF</p>
+     <div class="wa-qr-code">
+      <svg width="200" height="200" viewbox="0 0 29 29" fill="none"><!-- QR Code for https://www.seagri.df.gov.br/ --> <rect width="29" height="29" fill="white" /> <!-- Position markers (corners) --> <rect x="0" y="0" width="7" height="7" fill="black" /> <rect x="1" y="1" width="5" height="5" fill="white" /> <rect x="2" y="2" width="3" height="3" fill="black" /> <rect x="22" y="0" width="7" height="7" fill="black" /> <rect x="23" y="1" width="5" height="5" fill="white" /> <rect x="24" y="2" width="3" height="3" fill="black" /> <rect x="0" y="22" width="7" height="7" fill="black" /> <rect x="1" y="23" width="5" height="5" fill="white" /> <rect x="2" y="24" width="3" height="3" fill="black" /> <!-- Timing patterns --> <rect x="8" y="6" width="1" height="1" fill="black" /> <rect x="10" y="6" width="1" height="1" fill="black" /> <rect x="12" y="6" width="1" height="1" fill="black" /> <rect x="14" y="6" width="1" height="1" fill="black" /> <rect x="16" y="6" width="1" height="1" fill="black" /> <rect x="18" y="6" width="1" height="1" fill="black" /> <rect x="20" y="6" width="1" height="1" fill="black" /> <rect x="6" y="8" width="1" height="1" fill="black" /> <rect x="6" y="10" width="1" height="1" fill="black" /> <rect x="6" y="12" width="1" height="1" fill="black" /> <rect x="6" y="14" width="1" height="1" fill="black" /> <rect x="6" y="16" width="1" height="1" fill="black" /> <rect x="6" y="18" width="1" height="1" fill="black" /> <rect x="6" y="20" width="1" height="1" fill="black" /> <!-- Data pattern --> <rect x="8" y="8" width="1" height="1" fill="black" /> <rect x="9" y="8" width="1" height="1" fill="black" /> <rect x="11" y="8" width="1" height="1" fill="black" /> <rect x="13" y="8" width="1" height="1" fill="black" /> <rect x="14" y="8" width="1" height="1" fill="black" /> <rect x="16" y="8" width="1" height="1" fill="black" /> <rect x="18" y="8" width="1" height="1" fill="black" /> <rect x="20" y="8" width="1" height="1" fill="black" /> <rect x="8" y="9" width="1" height="1" fill="black" /> <rect x="10" y="9" width="1" height="1" fill="black" /> <rect x="12" y="9" width="1" height="1" fill="black" /> <rect x="15" y="9" width="1" height="1" fill="black" /> <rect x="17" y="9" width="1" height="1" fill="black" /> <rect x="19" y="9" width="1" height="1" fill="black" /> <rect x="20" y="9" width="1" height="1" fill="black" /> <rect x="8" y="10" width="1" height="1" fill="black" /> <rect x="9" y="10" width="1" height="1" fill="black" /> <rect x="10" y="10" width="1" height="1" fill="black" /> <rect x="12" y="10" width="1" height="1" fill="black" /> <rect x="14" y="10" width="1" height="1" fill="black" /> <rect x="15" y="10" width="1" height="1" fill="black" /> <rect x="17" y="10" width="1" height="1" fill="black" /> <rect x="19" y="10" width="1" height="1" fill="black" /> <rect x="20" y="10" width="1" height="1" fill="black" /> <rect x="9" y="11" width="1" height="1" fill="black" /> <rect x="11" y="11" width="1" height="1" fill="black" /> <rect x="13" y="11" width="1" height="1" fill="black" /> <rect x="16" y="11" width="1" height="1" fill="black" /> <rect x="18" y="11" width="1" height="1" fill="black" /> <rect x="20" y="11" width="1" height="1" fill="black" /> <rect x="8" y="12" width="1" height="1" fill="black" /> <rect x="10" y="12" width="1" height="1" fill="black" /> <rect x="11" y="12" width="1" height="1" fill="black" /> <rect x="13" y="12" width="1" height="1" fill="black" /> <rect x="15" y="12" width="1" height="1" fill="black" /> <rect x="17" y="12" width="1" height="1" fill="black" /> <rect x="19" y="12" width="1" height="1" fill="black" /> <rect x="20" y="12" width="1" height="1" fill="black" /> <rect x="9" y="13" width="1" height="1" fill="black" /> <rect x="10" y="13" width="1" height="1" fill="black" /> <rect x="12" y="13" width="1" height="1" fill="black" /> <rect x="14" y="13" width="1" height="1" fill="black" /> <rect x="16" y="13" width="1" height="1" fill="black" /> <rect x="18" y="13" width="1" height="1" fill="black" /> <rect x="19" y="13" width="1" height="1" fill="black" /> <rect x="8" y="14" width="1" height="1" fill="black" /> <rect x="11" y="14" width="1" height="1" fill="black" /> <rect x="13" y="14" width="1" height="1" fill="black" /> <rect x="15" y="14" width="1" height="1" fill="black" /> <rect x="17" y="14" width="1" height="1" fill="black" /> <rect x="20" y="14" width="1" height="1" fill="black" /> <rect x="9" y="15" width="1" height="1" fill="black" /> <rect x="10" y="15" width="1" height="1" fill="black" /> <rect x="12" y="15" width="1" height="1" fill="black" /> <rect x="14" y="15" width="1" height="1" fill="black" /> <rect x="16" y="15" width="1" height="1" fill="black" /> <rect x="18" y="15" width="1" height="1" fill="black" /> <rect x="20" y="15" width="1" height="1" fill="black" /> <rect x="8" y="16" width="1" height="1" fill="black" /> <rect x="11" y="16" width="1" height="1" fill="black" /> <rect x="13" y="16" width="1" height="1" fill="black" /> <rect x="15" y="16" width="1" height="1" fill="black" /> <rect x="17" y="16" width="1" height="1" fill="black" /> <rect x="19" y="16" width="1" height="1" fill="black" /> <rect x="9" y="17" width="1" height="1" fill="black" /> <rect x="10" y="17" width="1" height="1" fill="black" /> <rect x="12" y="17" width="1" height="1" fill="black" /> <rect x="14" y="17" width="1" height="1" fill="black" /> <rect x="16" y="17" width="1" height="1" fill="black" /> <rect x="18" y="17" width="1" height="1" fill="black" /> <rect x="20" y="17" width="1" height="1" fill="black" /> <rect x="8" y="18" width="1" height="1" fill="black" /> <rect x="11" y="18" width="1" height="1" fill="black" /> <rect x="13" y="18" width="1" height="1" fill="black" /> <rect x="15" y="18" width="1" height="1" fill="black" /> <rect x="17" y="18" width="1" height="1" fill="black" /> <rect x="19" y="18" width="1" height="1" fill="black" /> <rect x="9" y="19" width="1" height="1" fill="black" /> <rect x="10" y="19" width="1" height="1" fill="black" /> <rect x="12" y="19" width="1" height="1" fill="black" /> <rect x="14" y="19" width="1" height="1" fill="black" /> <rect x="16" y="19" width="1" height="1" fill="black" /> <rect x="18" y="19" width="1" height="1" fill="black" /> <rect x="20" y="19" width="1" height="1" fill="black" /> <rect x="8" y="20" width="1" height="1" fill="black" /> <rect x="9" y="20" width="1" height="1" fill="black" /> <rect x="10" y="20" width="1" height="1" fill="black" /> <rect x="11" y="20" width="1" height="1" fill="black" /> <rect x="12" y="20" width="1" height="1" fill="black" /> <rect x="13" y="20" width="1" height="1" fill="black" /> <rect x="14" y="20" width="1" height="1" fill="black" /> <rect x="15" y="20" width="1" height="1" fill="black" /> <rect x="16" y="20" width="1" height="1" fill="black" /> <rect x="17" y="20" width="1" height="1" fill="black" /> <rect x="18" y="20" width="1" height="1" fill="black" /> <rect x="19" y="20" width="1" height="1" fill="black" /> <rect x="20" y="20" width="1" height="1" fill="black" />
+      </svg>
+     </div>
+     <p class="wa-qr-link">🔗 www.seagri.df.gov.br</p><button class="wa-qr-close" onclick="toggleQRModal()">Fechar</button>
+    </div>
+   </div><!-- Chat Area -->
+   <div class="wa-chat-bg">
+    <div class="wa-chat-pattern"></div>
+    <div class="wa-chat-container" id="chat-container">
+     <div class="wa-empty-state" id="empty-state">
+      <div class="wa-empty-icon">
+       💬
+      </div>
+      <p class="wa-empty-title">Bem-vindo ao DefesaBot</p>
+      <p class="wa-empty-subtitle" id="footer-text">Secretaria de Agricultura, Pecuária e Abastecimento do DF</p>
+     </div>
+    </div>
+   </div><!-- Input Area -->
+   <div class="wa-input-area">
+    <div class="wa-input-actions"><span>😊</span> <span>📎</span>
+    </div>
+    <div class="wa-input-wrapper"><input type="text" class="wa-input" id="message-input" placeholder="Mensagem" autocomplete="off">
+    </div><button class="wa-send-btn" id="send-button" disabled> <span>➤</span> </button>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      bot_name: "DefesaBot SEAGRI-DF",
+      bot_status: "Atendimento 24h • Responde rápido",
+      welcome_message: "Olá! 👋 Sou o DefesaBot da SEAGRI-DF 🌾\n\nEstou aqui para ajudar você com serviços de defesa agropecuária do Distrito Federal.\n\nComo posso ajudar hoje?",
+      footer_text: "Secretaria de Agricultura, Pecuária e Abastecimento do DF",
+      header_color: "#202c33",
+      accent_color: "#25d366",
+      user_bubble_color: "#005c4b",
+      bot_bubble_color: "#202c33",
+      background_color: "#efeae2"
+    };
+
+    let messages = [];
+    let isTyping = false;
+    let currentConversation = {
+      active: false,
+      service: null,
+      step: 0,
+      data: {}
+    };
+
+    const conversationFlows = {
+      gta: {
+        name: "Guia de Trânsito Animal (GTA)",
+        steps: [
+          {
+            question: "Perfeito! Vou te ajudar com a emissão da GTA 📋\n\nPrimeiro, qual tipo de animal você vai transportar?",
+            options: ["🐄 Bovinos", "🐷 Suínos", "🐔 Aves", "🐴 Equinos", "🐑 Ovinos/Caprinos"]
+          },
+          {
+            question: "Ótimo! Agora me diga: qual é a finalidade do transporte?",
+            options: ["🏭 Abate", "🚜 Engorda", "🏠 Cria/Recria", "🎪 Exposição", "📦 Venda"]
+          },
+          {
+            question: "Entendi! Você possui cadastro no sistema SIAPEC III?",
+            options: ["✅ Sim, já tenho cadastro", "❌ Não, preciso me cadastrar"]
+          },
+          {
+            question: "Perfeito! Aqui estão as informações completas para emitir sua GTA:",
+            final: true,
+            info: `📋 **PASSO A PASSO - EMISSÃO DE GTA**
+
+**1. Acesso ao Sistema**
+• Entre no SIAPEC III
+• Faça login com CPF/CNPJ e senha
+• Selecione "Emitir Nova GTA"
+
+**2. Preenchimento**
+• Dados do proprietário
+• Informações dos animais
+• Origem e destino do transporte
+• Finalidade do transporte
+
+**3. Documentação Necessária**
+• Nota fiscal (se houver venda)
+• Atestado sanitário atualizado
+• Comprovante de vacinação
+• Documento de identificação
+
+**4. Aprovação**
+• Aguarde análise (até 24h úteis)
+• Acompanhe pelo sistema
+• Receba notificação por e-mail
+
+⚠️ **IMPORTANTE:**
+A GTA deve ser emitida ANTES do início do transporte. O transporte sem GTA é considerado infração sanitária.
+
+📞 **Dúvidas?**
+Ligue: (61) 3340-3333
+WhatsApp: (61) 99999-9999
+
+🔗 Acesse o sistema abaixo:`,
+            link: "https://www.seagri.df.gov.br/"
+          }
+        ]
+      },
+      cadastro: {
+        name: "Cadastro de Propriedade Rural",
+        steps: [
+          {
+            question: "Vou te ajudar com o cadastro da sua propriedade! 🏡\n\nVocê já possui algum cadastro rural anterior?",
+            options: ["✅ Sim, tenho CAR", "✅ Sim, tenho INCRA", "❌ Não tenho nenhum cadastro"]
+          },
+          {
+            question: "Qual é o tamanho aproximado da sua propriedade?",
+            options: ["📏 Até 4 hectares (pequena)", "📏 De 4 a 15 hectares (média)", "📏 De 15 a 50 hectares (grande)", "📏 Acima de 50 hectares"]
+          },
+          {
+            question: "Qual atividade principal você pretende desenvolver na propriedade?",
+            options: ["🌱 Agricultura (grãos, hortaliças)", "🐄 Pecuária (gado, leite)", "🌳 Silvicultura (reflorestamento)", "🐝 Apicultura/Meliponicultura", "🎣 Aquicultura (peixes)"]
+          },
+          {
+            question: "Excelente! Aqui está o guia completo para cadastrar sua propriedade:",
+            final: true,
+            info: `🏡 **CADASTRO DE PROPRIEDADE RURAL - SEAGRI-DF**
+
+**ETAPA 1: Documentação**
+📄 Documentos do Proprietário:
+• RG e CPF (cópia autenticada)
+• Comprovante de residência atualizado
+• Certidão de casamento (se aplicável)
+
+📄 Documentos da Propriedade:
+• Escritura pública ou contrato de arrendamento
+• CAR - Cadastro Ambiental Rural
+• CCIR - Certificado de Cadastro do INCRA
+• Croqui ou planta da propriedade
+
+**ETAPA 2: Cadastro Online**
+1. Acesse o Portal da SEAGRI-DF
+2. Clique em "Cadastro de Propriedade"
+3. Preencha o formulário completo
+4. Anexe documentos digitalizados
+5. Envie para análise
+
+**ETAPA 3: Vistoria**
+• Aguarde agendamento (5-10 dias úteis)
+• Técnico visitará a propriedade
+• Verificação das informações
+• Emissão de relatório técnico
+
+**ETAPA 4: Aprovação**
+• Análise final pela SEAGRI-DF
+• Emissão do certificado de cadastro
+• Recebimento por e-mail e correio
+
+💰 **TAXAS E CUSTOS:**
+• Taxa de cadastro: Consultar tabela atualizada
+• Vistoria técnica: Inclusa
+• Renovação: Anual
+
+📞 **ATENDIMENTO:**
+Segunda a Sexta: 8h às 18h
+Telefone: (61) 3340-3333
+
+🔗 Inicie seu cadastro:`,
+            link: "https://www.seagri.df.gov.br/"
+          }
+        ]
+      },
+      licenciamento: {
+        name: "Licenciamento Sanitário",
+        steps: [
+          {
+            question: "Vou te orientar sobre o licenciamento sanitário! 🏭\n\nQual tipo de estabelecimento você precisa licenciar?",
+            options: ["🏭 Indústria de alimentos", "🏪 Comércio de produtos agropecuários", "🚚 Transporte de produtos", "🏥 Clínica veterinária", "🌾 Armazém/Silo"]
+          },
+          {
+            question: "O estabelecimento já está construído ou ainda está em fase de projeto?",
+            options: ["🏗️ Em construção/projeto", "✅ Já construído e operando", "🔄 Reforma ou ampliação"]
+          },
+          {
+            question: "Você possui responsável técnico (RT) habilitado para o estabelecimento?",
+            options: ["✅ Sim, já tenho RT contratado", "❌ Não, preciso contratar RT", "❓ Não sei se preciso"]
+          },
+          {
+            question: "Perfeito! Veja o processo completo de licenciamento sanitário:",
+            final: true,
+            info: `🏭 **LICENCIAMENTO SANITÁRIO - PASSO A PASSO**
+
+**FASE 1: Preparação**
+📋 Contrate Responsável Técnico:
+• Médico veterinário (CRMV ativo)
+• Engenheiro agrônomo (CREA ativo)
+• Conforme atividade do estabelecimento
+
+📐 Elabore Projeto Técnico:
+• Planta baixa detalhada
+• Memorial descritivo das atividades
+• Fluxograma de produção
+• Plano de controle sanitário
+
+**FASE 2: Protocolo**
+1. Reúna toda documentação
+2. Acesse o sistema online da SEAGRI
+3. Preencha formulário de solicitação
+4. Anexe todos os documentos
+5. Pague taxa de protocolo
+6. Aguarde número de processo
+
+**FASE 3: Vistoria Técnica**
+• Agendamento em até 15 dias
+• Inspeção das instalações
+• Verificação de conformidades
+• Relatório técnico detalhado
+• Possíveis adequações necessárias
+
+**FASE 4: Aprovação e Alvará**
+• Análise final do processo
+• Emissão do alvará sanitário
+• Validade: 12 meses
+• Renovação anual obrigatória
+
+📄 **DOCUMENTOS NECESSÁRIOS:**
+• Projeto técnico completo com ART/TRT
+• CNPJ e contrato social
+• Licença ambiental (quando aplicável)
+• Alvará de funcionamento da prefeitura
+• Comprovante de propriedade/locação
+• Certificado de responsável técnico
+
+⏱️ **PRAZOS:**
+• Análise inicial: 10 dias úteis
+• Vistoria: 15 dias após protocolo
+• Emissão do alvará: 30-60 dias
+
+💰 **CUSTOS:**
+Consulte tabela atualizada no site oficial
+
+⚠️ **IMPORTANTE:**
+Operar sem licença sanitária é infração grave sujeita a multas e interdição.
+
+🔗 Protocole seu pedido:`,
+            link: "https://www.seagri.df.gov.br/"
+          }
+        ]
+      }
+    };
+
+    const dataHandler = {
+      onDataChanged(data) {
+        messages = data.sort((a, b) => a.timestamp - b.timestamp);
+        renderMessages();
+      }
+    };
+
+    async function initializeApp() {
+      if (window.dataSdk) {
+        const initResult = await window.dataSdk.init(dataHandler);
+        if (!initResult.isOk) {
+          console.error("Falha ao inicializar Data SDK");
+        }
+      }
+
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            const botNameEl = document.getElementById('bot-name');
+            if (botNameEl) {
+              botNameEl.textContent = config.bot_name || defaultConfig.bot_name;
+            }
+            
+            const botStatusEl = document.getElementById('bot-status');
+            if (botStatusEl) {
+              botStatusEl.textContent = config.bot_status || defaultConfig.bot_status;
+            }
+            
+            const footerTextEl = document.getElementById('footer-text');
+            if (footerTextEl) {
+              footerTextEl.textContent = config.footer_text || defaultConfig.footer_text;
+            }
+            
+            const headerColor = config.header_color || defaultConfig.header_color;
+            const accentColor = config.accent_color || defaultConfig.accent_color;
+            const userBubbleColor = config.user_bubble_color || defaultConfig.user_bubble_color;
+            const botBubbleColor = config.bot_bubble_color || defaultConfig.bot_bubble_color;
+            const backgroundColor = config.background_color || defaultConfig.background_color;
+            
+            document.querySelector('.wa-header').style.background = headerColor;
+            document.querySelector('.wa-input-area').style.background = headerColor;
+            document.querySelector('.wa-send-btn').style.background = accentColor;
+            document.querySelector('.wa-chat-bg').style.background = backgroundColor;
+            
+            const userBubbles = document.querySelectorAll('.wa-message.user .wa-bubble');
+            userBubbles.forEach(bubble => {
+              bubble.style.background = userBubbleColor;
+            });
+            
+            const botBubbles = document.querySelectorAll('.wa-message.bot .wa-bubble');
+            botBubbles.forEach(bubble => {
+              bubble.style.background = botBubbleColor;
+            });
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [
+              {
+                get: () => config.background_color || defaultConfig.background_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.background_color = value;
+                    window.elementSdk.setConfig({ background_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.bot_bubble_color || defaultConfig.bot_bubble_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.bot_bubble_color = value;
+                    window.elementSdk.setConfig({ bot_bubble_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.user_bubble_color || defaultConfig.user_bubble_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.user_bubble_color = value;
+                    window.elementSdk.setConfig({ user_bubble_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.header_color || defaultConfig.header_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.header_color = value;
+                    window.elementSdk.setConfig({ header_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.accent_color || defaultConfig.accent_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.accent_color = value;
+                    window.elementSdk.setConfig({ accent_color: value });
+                  }
+                }
+              }
+            ],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ["bot_name", config.bot_name || defaultConfig.bot_name],
+            ["bot_status", config.bot_status || defaultConfig.bot_status],
+            ["welcome_message", config.welcome_message || defaultConfig.welcome_message],
+            ["footer_text", config.footer_text || defaultConfig.footer_text]
+          ])
+        });
+      }
+
+      setupEventListeners();
+      
+      setTimeout(() => {
+        sendBotWelcome();
+      }, 800);
+    }
+
+    function setupEventListeners() {
+      const input = document.getElementById('message-input');
+      const sendButton = document.getElementById('send-button');
+
+      input.addEventListener('input', () => {
+        sendButton.disabled = input.value.trim() === '';
+      });
+
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && input.value.trim() !== '') {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      sendButton.addEventListener('click', () => {
+        if (input.value.trim() !== '') {
+          sendMessage();
+        }
+      });
+    }
+
+    async function sendBotWelcome() {
+      const config = window.elementSdk?.config || defaultConfig;
+      const welcomeText = config.welcome_message || defaultConfig.welcome_message;
+      
+      await addBotMessage(welcomeText, [
+        "📋 Emitir Guia de Trânsito Animal (GTA)",
+        "🏡 Cadastro de Propriedade Rural",
+        "🏭 Licenciamento Sanitário",
+        "ℹ️ Informações Gerais"
+      ]);
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('message-input');
+      const messageText = input.value.trim();
+      
+      if (messageText === '' || isTyping) return;
+
+      const sendButton = document.getElementById('send-button');
+      sendButton.disabled = true;
+
+      const userMessage = {
+        id: `msg_${Date.now()}_${Math.random()}`,
+        text: messageText,
+        sender: 'user',
+        timestamp: Date.now(),
+        service_type: currentConversation.service || 'general',
+        conversation_step: currentConversation.step
+      };
+
+      if (window.dataSdk) {
+        if (messages.length >= 999) {
+          showToast('Limite de 999 mensagens atingido.');
+          sendButton.disabled = false;
+          return;
+        }
+
+        const createResult = await window.dataSdk.create(userMessage);
+        if (!createResult.isOk) {
+          showToast('Erro ao enviar mensagem. Tente novamente.');
+          sendButton.disabled = false;
+          return;
+        }
+      }
+
+      input.value = '';
+      
+      setTimeout(() => {
+        handleUserMessage(messageText);
+      }, 600);
+    }
+
+    async function handleUserMessage(text) {
+      if (currentConversation.active) {
+        await handleConversationFlow(text);
+      } else {
+        await handleGeneralMessage(text);
+      }
+    }
+
+    async function handleConversationFlow(text) {
+      const flow = conversationFlows[currentConversation.service];
+      const currentStep = flow.steps[currentConversation.step];
+      
+      currentConversation.data[`step_${currentConversation.step}`] = text;
+      currentConversation.step++;
+      
+      if (currentConversation.step < flow.steps.length) {
+        const nextStep = flow.steps[currentConversation.step];
+        
+        if (nextStep.final) {
+          await addBotMessage(nextStep.question);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await addBotMessage(nextStep.info, null, nextStep.link);
+          currentConversation.active = false;
+          currentConversation.service = null;
+          currentConversation.step = 0;
+          currentConversation.data = {};
+          
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          await addBotMessage("Posso ajudar com mais alguma coisa? 😊", [
+            "📋 Emitir outra GTA",
+            "🏡 Cadastro Rural",
+            "🏭 Licenciamento",
+            "🔄 Voltar ao menu principal",
+            "👋 Encerrar atendimento"
+          ]);
+        } else {
+          await addBotMessage(nextStep.question, nextStep.options);
+        }
+      }
+    }
+
+    async function handleGeneralMessage(text) {
+      const lowerText = text.toLowerCase();
+      
+      if (lowerText.includes('gta') || lowerText.includes('guia') || lowerText.includes('trânsito') || lowerText.includes('animal')) {
+        startConversation('gta');
+      } else if (lowerText.includes('cadastro') || lowerText.includes('propriedade') || lowerText.includes('rural') || lowerText.includes('fazenda')) {
+        startConversation('cadastro');
+      } else if (lowerText.includes('licen') || lowerText.includes('sanitário') || lowerText.includes('alvará') || lowerText.includes('estabelecimento')) {
+        startConversation('licenciamento');
+      } else if (lowerText.includes('informações') || lowerText.includes('info') || lowerText.includes('ajuda') || lowerText.includes('menu') || lowerText.includes('serviços')) {
+        await sendBotWelcome();
+      } else if (lowerText.includes('olá') || lowerText.includes('oi') || lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite') || lowerText.includes('ola')) {
+        await addBotMessage("Olá! 👋 Seja muito bem-vindo à SEAGRI-DF!\n\nEstou aqui para facilitar seu atendimento com serviços de defesa agropecuária.\n\nComo posso ajudar você hoje?", [
+          "📋 Emitir GTA",
+          "🏡 Cadastro Rural",
+          "🏭 Licenciamento",
+          "ℹ️ Ver todos os serviços"
+        ]);
+      } else if (lowerText.includes('horário') || lowerText.includes('atendimento') || lowerText.includes('funciona')) {
+        await addBotMessage("🕐 **HORÁRIO DE ATENDIMENTO SEAGRI-DF**\n\n📅 Segunda a Sexta-feira\n⏰ 8h às 18h (horário de Brasília)\n\n📅 Sábados\n⏰ 8h às 12h\n\n🚫 Domingos e feriados: Fechado\n\n📞 **CONTATOS:**\nTelefone: (61) 3340-3333\nWhatsApp: (61) 99999-9999\n📧 Email: atendimento@seagri.df.gov.br\n\n💬 Este chatbot funciona 24h por dia!");
+      } else if (lowerText.includes('endereço') || lowerText.includes('localização') || lowerText.includes('onde fica') || lowerText.includes('local')) {
+        await addBotMessage("📍 **LOCALIZAÇÃO DA SEAGRI-DF**\n\n🏢 Secretaria de Agricultura, Pecuária e Abastecimento\nParque Estação Biológica - PqEB\nAsa Norte - Brasília/DF\nCEP: 70770-200\n\n🚗 **COMO CHEGAR:**\n• Estacionamento gratuito disponível\n• Acesso pela via L4 Norte\n• Próximo ao Jardim Botânico\n\n🚌 **TRANSPORTE PÚBLICO:**\nÔnibus: Linhas 0.108, 0.109, 0.110\n\n🗺️ Coordenadas GPS:\n-15.7801° S, -47.8825° W");
+      } else if (lowerText.includes('obrigad') || lowerText.includes('valeu') || lowerText.includes('agradeço')) {
+        await addBotMessage("Por nada! 😊 Fico feliz em ajudar!\n\nSe precisar de qualquer outra informação sobre serviços da SEAGRI-DF, é só me chamar.\n\nEstou sempre por aqui! 🌾", [
+          "📋 Emitir GTA",
+          "🏡 Cadastro Rural",
+          "🏭 Licenciamento",
+          "🔄 Voltar ao menu",
+          "👋 Encerrar atendimento"
+        ]);
+      } else if (lowerText.includes('encerrar') || lowerText.includes('finalizar') || lowerText.includes('tchau') || lowerText.includes('até logo') || lowerText.includes('adeus')) {
+        await handleEndConversation();
+      } else {
+        await addBotMessage("Desculpe, não entendi sua solicitação. 😅\n\nVocê pode reformular sua pergunta ou escolher uma das opções abaixo:", [
+          "📋 Emitir GTA",
+          "🏡 Cadastro Rural",
+          "🏭 Licenciamento",
+          "ℹ️ Informações Gerais",
+          "📞 Falar com atendente"
+        ]);
+      }
+    }
+
+    async function startConversation(serviceType) {
+      currentConversation.active = true;
+      currentConversation.service = serviceType;
+      currentConversation.step = 0;
+      currentConversation.data = {};
+      
+      const flow = conversationFlows[serviceType];
+      const firstStep = flow.steps[0];
+      
+      await addBotMessage(firstStep.question, firstStep.options);
+    }
+
+    async function handleEndConversation() {
+      const farewellMessages = [
+        "Foi um prazer atender você! 😊🌾\n\n**Obrigado por utilizar os serviços da SEAGRI-DF.**\n\nSe precisar de qualquer informação no futuro, estarei aqui 24 horas por dia, 7 dias por semana!\n\n✅ Atendimento encerrado com sucesso.\n\n🌱 Tenha um ótimo dia e boas colheitas!",
+        "Fico feliz em ter ajudado! 🎉\n\n**Sua satisfação é muito importante para nós.**\n\nLembre-se: estou sempre disponível para esclarecer dúvidas sobre defesa agropecuária do DF.\n\n✅ Conversa finalizada.\n\n🌾 Até a próxima! Sucesso em suas atividades rurais!",
+        "Obrigado por confiar na SEAGRI-DF! 💚\n\n**Espero ter solucionado suas dúvidas.**\n\nSempre que precisar de orientações sobre serviços agropecuários, pode contar comigo!\n\n✅ Atendimento concluído.\n\n🚜 Até breve e bons negócios!"
+      ];
+
+      const randomFarewell = farewellMessages[Math.floor(Math.random() * farewellMessages.length)];
+      
+      await addBotMessage(randomFarewell);
+      
+      currentConversation.active = false;
+      currentConversation.service = null;
+      currentConversation.step = 0;
+      currentConversation.data = {};
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      await addBotMessage("💬 **Novo atendimento**\n\nSe precisar de ajuda novamente, é só enviar uma mensagem! Estou aqui para você. 😊", [
+        "📋 Emitir GTA",
+        "🏡 Cadastro Rural",
+        "🏭 Licenciamento",
+        "ℹ️ Informações Gerais"
+      ]);
+    }
+
+    async function addBotMessage(text, options = null, link = null) {
+      isTyping = true;
+      showTypingIndicator();
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      hideTypingIndicator();
+
+      let fullText = text;
+      if (link) {
+        fullText += `\n\n<a href="${link}" target="_blank" rel="noopener noreferrer" class="wa-link-btn">🔗 Acessar Sistema Oficial</a>`;
+      }
+
+      const botMessage = {
+        id: `msg_${Date.now()}_${Math.random()}`,
+        text: fullText,
+        sender: 'bot',
+        timestamp: Date.now(),
+        service_type: currentConversation.service || 'general',
+        conversation_step: currentConversation.step
+      };
+
+      if (window.dataSdk) {
+        if (messages.length >= 999) {
+          isTyping = false;
+          return;
+        }
+
+        const createResult = await window.dataSdk.create(botMessage);
+        if (!createResult.isOk) {
+          console.error('Erro ao criar mensagem do bot');
+        }
+      }
+
+      if (options) {
+        await new Promise(resolve => setTimeout(resolve, 400));
+        renderQuickReplies(options);
+      }
+
+      isTyping = false;
+      document.getElementById('send-button').disabled = false;
+    }
+
+    function renderQuickReplies(options) {
+      const chatContainer = document.getElementById('chat-container');
+      
+      const existingReplies = document.querySelector('.quick-replies-container');
+      if (existingReplies) {
+        existingReplies.remove();
+      }
+      
+      const repliesContainer = document.createElement('div');
+      repliesContainer.className = 'wa-message bot quick-replies-container';
+      repliesContainer.innerHTML = `
+        <div class="wa-quick-replies">
+          ${options.map(option => `
+            <button class="wa-quick-reply-btn" onclick="handleQuickReply('${escapeForAttribute(option)}')">
+              ${escapeHtml(option)}
+            </button>
+          `).join('')}
+        </div>
+      `;
+      
+      chatContainer.appendChild(repliesContainer);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    window.handleQuickReply = async function(option) {
+      const repliesContainer = document.querySelector('.quick-replies-container');
+      if (repliesContainer) {
+        repliesContainer.remove();
+      }
+      
+      const userMessage = {
+        id: `msg_${Date.now()}_${Math.random()}`,
+        text: option,
+        sender: 'user',
+        timestamp: Date.now(),
+        service_type: currentConversation.service || 'general',
+        conversation_step: currentConversation.step
+      };
+
+      if (window.dataSdk) {
+        if (messages.length >= 999) {
+          showToast('Limite de 999 mensagens atingido.');
+          return;
+        }
+
+        const createResult = await window.dataSdk.create(userMessage);
+        if (!createResult.isOk) {
+          showToast('Erro ao enviar mensagem.');
+          return;
+        }
+      }
+
+      setTimeout(() => {
+        handleUserMessage(option);
+      }, 600);
+    };
+
+    function showTypingIndicator() {
+      const chatContainer = document.getElementById('chat-container');
+      const existingIndicator = document.querySelector('.typing-indicator-container');
+      
+      if (!existingIndicator) {
+        const indicator = document.createElement('div');
+        indicator.className = 'wa-message bot typing-indicator-container';
+        indicator.innerHTML = `
+          <div class="wa-bubble-tail"></div>
+          <div class="wa-typing active">
+            <div class="wa-typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        `;
+        chatContainer.appendChild(indicator);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    function hideTypingIndicator() {
+      const indicator = document.querySelector('.typing-indicator-container');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    function renderMessages() {
+      const chatContainer = document.getElementById('chat-container');
+      const emptyState = document.getElementById('empty-state');
+      
+      if (messages.length === 0) {
+        emptyState.style.display = 'flex';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      
+      const existingMessages = new Map(
+        [...chatContainer.querySelectorAll('.wa-message[data-message-id]')].map(el => [
+          el.dataset.messageId,
+          el
+        ])
+      );
+
+      messages.forEach(message => {
+        const messageId = message.__backendId || message.id;
+        if (existingMessages.has(messageId)) {
+          existingMessages.delete(messageId);
+        } else {
+          const messageEl = createMessageElement(message);
+          
+          const typingIndicator = document.querySelector('.typing-indicator-container');
+          const quickReplies = document.querySelector('.quick-replies-container');
+          
+          if (typingIndicator) {
+            chatContainer.insertBefore(messageEl, typingIndicator);
+          } else if (quickReplies) {
+            chatContainer.insertBefore(messageEl, quickReplies);
+          } else {
+            chatContainer.appendChild(messageEl);
+          }
+        }
+      });
+
+      existingMessages.forEach(el => {
+        if (!el.classList.contains('typing-indicator-container') && 
+            !el.classList.contains('quick-replies-container')) {
+          el.remove();
+        }
+      });
+      
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function createMessageElement(message) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `wa-message ${message.sender}`;
+      messageDiv.dataset.messageId = message.__backendId || message.id;
+
+      const config = window.elementSdk?.config || defaultConfig;
+      const bubbleColor = message.sender === 'user' 
+        ? (config.user_bubble_color || defaultConfig.user_bubble_color)
+        : (config.bot_bubble_color || defaultConfig.bot_bubble_color);
+
+      const time = new Date(message.timestamp).toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+
+      const businessBadge = message.sender === 'bot' 
+        ? `<div class="wa-business-badge">✓ SEAGRI-DF</div>` 
+        : '';
+
+      const formattedText = formatMessageText(message.text);
+
+      const checkmarks = message.sender === 'user' 
+        ? '<span class="wa-checkmarks">✓✓</span>' 
+        : '';
+
+      messageDiv.innerHTML = `
+        <div class="wa-bubble-tail"></div>
+        <div class="wa-bubble" style="background: ${bubbleColor}">
+          ${businessBadge}
+          <div class="wa-message-text">${formattedText}</div>
+          <div class="wa-message-footer">
+            <span>${time}</span>
+            ${checkmarks}
+          </div>
+        </div>
+      `;
+
+      return messageDiv;
+    }
+
+    function formatMessageText(text) {
+      let formatted = text;
+      
+      // Preserve links before escaping
+      const linkRegex = /<a\s+href="([^"]+)"\s+target="_blank"\s+rel="noopener noreferrer"\s+class="wa-link-btn">([^<]+)<\/a>/g;
+      const links = [];
+      formatted = formatted.replace(linkRegex, (match, href, text) => {
+        links.push({ href, text });
+        return `__LINK_${links.length - 1}__`;
+      });
+      
+      // Escape HTML
+      formatted = escapeHtml(formatted);
+      
+      // Apply bold formatting
+      formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      // Replace newlines
+      formatted = formatted.replace(/\n/g, '<br>');
+      
+      // Restore links
+      links.forEach((link, index) => {
+        formatted = formatted.replace(
+          `__LINK_${index}__`,
+          `<a href="${link.href}" target="_blank" rel="noopener noreferrer" class="wa-link-btn">${link.text}</a>`
+        );
+      });
+      
+      return formatted;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function escapeForAttribute(text) {
+      return text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function showToast(text) {
+      const existingToast = document.querySelector('.wa-toast');
+      if (existingToast) {
+        existingToast.remove();
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'wa-toast';
+      toast.textContent = text;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    function toggleQRModal() {
+      const modal = document.getElementById('qr-modal');
+      modal.classList.toggle('active');
+    }
+
+    function closeQRModal(event) {
+      if (event.target.id === 'qr-modal') {
+        toggleQRModal();
+      }
+    }
+
+    initializeApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99b7323fb1ecf390',t:'MTc2MjYyNzIwMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
